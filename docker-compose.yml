@@ -1,0 +1,58 @@
+services:
+
+  api:
+    build: .
+    container_name: movie-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:16
+    container_name: movie-postgres
+    environment:
+      POSTGRES_USER: movieuser
+      POSTGRES_PASSWORD: moviepassword
+      POSTGRES_DB: moviedb
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U movieuser -d moviedb"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7
+    container_name: movie-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "redis-cli",
+          "PING"
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+
+volumes:
+  postgres_data:
