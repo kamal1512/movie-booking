@@ -9,12 +9,13 @@ def test_root(client):
 
     assert  response.status_code == 200
 
-def test_get_movie(client):
+def test_get_movie(client, setup_test_data):
+    user, movie = setup_test_data
 
-    response = client.get("/movies/1")
+    response = client.get(f"/movies/{movie.id}")
 
     assert response.status_code == 200
 
     data = response.json()
 
-    assert data.get("id") == 1
+    assert data.get("id") == movie.id

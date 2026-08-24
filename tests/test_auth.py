@@ -1,9 +1,9 @@
 
-def test_login(client):
+def test_login(client, setup_test_data):
     response = client.post(
         "/users/login",
         data={
-            "username": "k@gmail.com",
+            "username": "ka@gmail.com",
             "password": "123"
         }
     )
@@ -15,7 +15,7 @@ def test_login(client):
     assert "access_token" in data
     assert data.get("token_type") == "bearer"
 
-def test_invalid_login(client):
+def test_invalid_login(client, setup_test_data):
 
     response = client.post(
         "/users/login",
@@ -27,12 +27,12 @@ def test_invalid_login(client):
 
     assert response.status_code == 401
 
-def test_protected_endpoint(client):
+def test_protected_endpoint(client, setup_test_data):
 
     login_response = client.post(
         "/users/login",
         data={
-            "username": "k@gmail.com",
+            "username": "ka@gmail.com",
             "password": "123"
         }
     )
@@ -55,7 +55,7 @@ def test_protected_endpoint(client):
     assert response.status_code == 200
 
 
-def test_protected_endpoint_without_token(client):
+def test_protected_endpoint_without_token(client, setup_test_data):
         response = client.get(
             "/users/me"
         )
