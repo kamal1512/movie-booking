@@ -67,7 +67,24 @@ async def get_movies(language: str, db: AsyncSession = Depends(get_async_db)):
 #     logger.info("GET MOVIES TOOK %.2fms", total_time)
 #
 #     return movies
+@router.get("/pagination")
+def get_movies_pagination(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(
+        20,
+        ge=1,
+        le=100
+    ),
+    db: Session = Depends(get_db)
+):
+    offset = (page - 1) * page_size
 
+    return (
+        db.query(Movie)
+        .offset(offset)
+        .limit(page_size)
+        .all()
+    )
 @router.get("/search")
 def search_movies(name: str, db: Session = Depends(get_db)):
     return movie_service.search_movies(db, name)
