@@ -8,16 +8,16 @@ jobs:
   test:
     runs-on: ubuntu-latest
     env:
-      SECRET_KEY: test-secret-key-for-ci
+      SECRET_KEY: ${{ secrets.JWT_SECRET }}
       ALGORITHM: HS256
 
     services:
       postgres:
         image: postgres:16
         env:
-          POSTGRES_USER: movieuser
-          POSTGRES_PASSWORD: moviepassword
-          POSTGRES_DB: moviedb
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpassword
+          POSTGRES_DB: testdb
         ports:
           - 5432:5432
         options: >-
@@ -42,11 +42,11 @@ jobs:
 
       - name: Run migrations
         env:
-          POSTGRES_USER: movieuser
-          POSTGRES_PASSWORD: moviepassword
-          POSTGRES_DB: moviedb
           POSTGRES_HOST: localhost
           POSTGRES_PORT: 5432
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpassword
+          POSTGRES_DB: testdb
         run: python -m alembic upgrade head
 
       - name: Run tests
