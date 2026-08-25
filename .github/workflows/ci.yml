@@ -109,7 +109,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE }}
+          role-to-assume: arn:aws:iam::704427427235:role/github-actions-movie-api
           aws-region: ap-south-1
 
 
