@@ -13,26 +13,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: movieuser
-          POSTGRES_PASSWORD: moviepassword
-          POSTGRES_DB: moviedb
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U movieuser -d moviedb"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 5
-
-      redis:
-        image: redis:7
-        ports:
-          - 6379:6379
-
     steps:
 
       - name: Checkout
@@ -47,25 +27,8 @@ jobs:
         run: |
           pip install -r requirements.txt
 
-      - name: Run database migrations
-        env:
-          POSTGRES_USER: movieuser
-          POSTGRES_PASSWORD: moviepassword
-          POSTGRES_DB: moviedb
-          POSTGRES_HOST: localhost
-          POSTGRES_PORT: 5432
-        run: |
-          alembic upgrade head
-
       - name: Run tests
         env:
-          POSTGRES_USER: movieuser
-          POSTGRES_PASSWORD: moviepassword
-          POSTGRES_DB: moviedb
-          POSTGRES_HOST: localhost
-          POSTGRES_PORT: 5432
-          REDIS_HOST: localhost
-          REDIS_PORT: 6379
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
         run: |
           pytest
