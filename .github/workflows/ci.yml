@@ -35,17 +35,37 @@ jobs:
 
     steps:
 
+      # -------------------------
+      # Checkout
+      # -------------------------
+
       - name: Checkout
         uses: actions/checkout@v4
+
+
+      # -------------------------
+      # Python
+      # -------------------------
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
+
+      # -------------------------
+      # Dependencies
+      # -------------------------
+
       - name: Install dependencies
         run: |
+          python -m pip install --upgrade pip
           pip install -r requirements.txt
+
+
+      # -------------------------
+      # Database migration
+      # -------------------------
 
       - name: Run database migrations
         env:
@@ -55,7 +75,12 @@ jobs:
           POSTGRES_HOST: localhost
           POSTGRES_PORT: 5432
         run: |
-          alembic upgrade head
+          python -m alembic upgrade head
+
+
+      # -------------------------
+      # Tests
+      # -------------------------
 
       - name: Run tests
         env:
@@ -67,13 +92,14 @@ jobs:
           REDIS_HOST: localhost
           REDIS_PORT: 6379
           SECRET_KEY: ${{ secrets.JWT_SECRET }}
+          ALGORITHM: HS256
         run: |
           pytest
 
-      - name: Debug GitHub OIDC token
-        uses: github/actions-oidc-debugger@main
-        with:
-          audience: sts.amazonaws.com
+
+      # -------------------------
+      # AWS authentication
+      # -------------------------
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -81,70 +107,32 @@ jobs:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE }}
           aws-region: ap-south-1
 
-      - name: Login to ECR
+
+      # -------------------------
+      # ECR login
+      # -------------------------
+
+      - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build image
+
+      # -------------------------
+      # Docker build
+      # -------------------------
+
+      - name: Build Docker image
         run: |
           docker build \
             -t ${{ steps.login-ecr.outputs.registry }}/movie-api:${{ github.sha }} \
             .
 
-      - name: Push image
+
+      # -------------------------
+      # Push to ECR
+      # -------------------------
+
+      - name: Push Docker image
         run: |
           docker push \
             ${{ steps.login-ecr.outputs.registry }}/movie-api:${{ github.sha }}
-
-  test:
-    runs-on: ubuntu-latest
-    env:
-      SECRET_KEY: ${{ secrets.JWT_SECRET }}
-      ALGORITHM: HS256
-
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: movieuser
-          POSTGRES_PASSWORD: moviepassword
-          POSTGRES_DB: moviedb
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd="pg_isready -U movieuser -d moviedb"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-      - name: Run migrations
-        env:
-          POSTGRES_USER: movieuser
-          POSTGRES_PASSWORD: moviepassword
-          POSTGRES_DB: moviedb
-          POSTGRES_HOST: localhost
-          POSTGRES_PORT: 5432
-        run: python -m alembic upgrade head
-
-      - name: Run tests
-        env:
-          POSTGRES_USER: movieuser
-          POSTGRES_PASSWORD: moviepassword
-          POSTGRES_DB: moviedb
-          POSTGRES_HOST: localhost
-          POSTGRES_PORT: 5432
-        run: pytest
