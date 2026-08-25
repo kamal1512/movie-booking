@@ -6,6 +6,7 @@ from app.models.movie import Movie
 from app.models.user import User
 from app.models.booking import Booking
 
+from app.api.routes.health import router as health_router
 from app.api.routes.movies import router as movie_router
 from app.api.routes.users import router as user_router
 from app.api.routes.bookings import router as booking_router
@@ -25,6 +26,7 @@ app.middleware("http")(log_request_time)
 app.include_router(movie_router)
 app.include_router(user_router)
 app.include_router(booking_router)
+app.include_router(health_router)
 
 @app.get("/")
 def home():
