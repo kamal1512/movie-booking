@@ -34,3 +34,8 @@ def home():
         "message": "Movie Booking API is running"
     }
 
+@app.get("/version")
+def version():
+    return {
+        "version": "1.1"
+    }
